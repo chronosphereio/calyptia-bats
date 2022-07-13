@@ -10,8 +10,9 @@ export CALYTPIA_BATS_REF=${CALYTPIA_BATS_REF:-main}
 export CALYPTIA_BATS_DIR=${CALYPTIA_BATS_DIR:-$PWD/calyptia-bats}
 
 # Helper files can include custom functions to simplify testing
+# This is the location of the default helpers.
 export HELPERS_ROOT=${HELPERS_ROOT:-$CALYPTIA_BATS_DIR}
-# Any -helpers.bash files in this directory will be source'd to add custom helper functions per test root
+# This is th location of any custom helpers.
 export CUSTOM_HELPERS_ROOT=${CUSTOM_HELPERS_ROOT:-$TEST_ROOT/helpers/}
 
 # Some common options
@@ -123,15 +124,4 @@ if [[ "${SKIP_BATS_INSTALL:-no}" != "yes" ]]; then
     install_bats
 fi
 
-# shellcheck disable=SC1091
-source "$HELPERS_ROOT/test-helpers.bash"
-
-# Now source any additional `-helpers.bash` files we fine in CUSTOM_HELPERS_ROOT
-if [[ -d "$CUSTOM_HELPERS_ROOT" ]]; then
-    for CUSTOM_HELPER_FILE in "$CUSTOM_HELPERS_ROOT"/*-helpers.bash
-    do
-        # shellcheck source=/dev/null
-        source "$CUSTOM_HELPER_FILE"
-    done
-fi
 run_tests "$@"
