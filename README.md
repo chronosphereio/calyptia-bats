@@ -6,8 +6,13 @@ The intention is to use [`calyptia-bats.sh`](./calyptia-bats.sh) to run all test
 
 TEST_ROOT should be set to the location of the actual BATS tests to run.
 
+```shell
+export TEST_ROOT=examples
+bash <(curl -s https://raw.githubusercontent.com/calyptia/bats/main/calyptia-bats.sh)
+```
+
+## Helpers
+
 `test-helpers.bash` contains common functions to use.
 
 Additional helpers can be provided in TEST_ROOT/helpers.
-
-`install-bats.sh` will install all supporting libraries required.
