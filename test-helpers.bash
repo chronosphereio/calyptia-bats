@@ -157,3 +157,13 @@ function check_remote_file_exists() {
         fail "remote file does not exist: $1"
     fi
 }
+
+# this function is used to create a unique string used to uniquely identify messages.
+function random_string() {
+	local chars=abcdefghijklmnopqrstuvwxyz0123456890
+	# shellcheck disable=SC2034
+	for i in {1..32} ; do
+		echo -n "${chars:RANDOM%${#chars}:1}" | sha256sum | cut -f1 -d' '
+	done
+	echo
+}
