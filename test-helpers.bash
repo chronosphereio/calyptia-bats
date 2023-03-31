@@ -139,7 +139,8 @@ function wait_for_container_output() {
         fail "unable to get logs for container: $CONTAINER_NAME"
     fi
 
-    until "$CONTAINER_RUNTIME" logs "$CONTAINER_NAME"|grep -qF "$EXPECTED_OUTPUT" ; do
+    # Note for failing containers, logs go to stderr
+    until "$CONTAINER_RUNTIME" logs "$CONTAINER_NAME" 2>&1 |grep -qF "$EXPECTED_OUTPUT" ; do
         # Prevent an infinite loop - at 5 seconds per go this is 10 minutes
         if [ $ATTEMPTS -gt "120" ]; then
             fail "wait_for_container_output ultimate max exceeded: \"$EXPECTED_OUTPUT\" ($*)"
