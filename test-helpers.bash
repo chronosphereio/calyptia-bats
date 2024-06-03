@@ -154,9 +154,14 @@ function wait_for_container_output() {
 }
 
 function wait_for_container_output_matching_file() {
-    local MAX_ATTEMPTS=$1
+    local MAX_WAIT_SECONDS=$1
     local CONTAINER_NAME=$2
     local EXPECTED_OUTPUT_FILE=$3
+    local POLL_INTERVAL=${4:-1}
+
+    local MAX_POSSIBLE_WAIT_SECONDS=600  # never run for more than 10 minutes
+    local MAX_ATTEMPTS=$((MAX_WAIT_SECONDS / POLL_INTERVAL))
+    local MAX_POSSIBLE_ATTEMPTS=$((MAX_POSSIBLE_WAIT_SECONDS / POLL_INTERVAL))
 
     shift
     local ATTEMPTS=0
@@ -178,15 +183,14 @@ function wait_for_container_output_matching_file() {
     # allows grep to match a multline string against docker logs output
     # Note for failing containers, logs go to stderr
     until ("$CONTAINER_RUNTIME" logs "$CONTAINER_NAME" || :) 2>&1 | tr '\n' '\1' | grep -qF "$(tr '\n' '\1' < $EXPECTED_OUTPUT_FILE)" ; do
-        # Prevent an infinite loop - at 0.2 seconds per go this is 10 minutes
-        if [ $ATTEMPTS -gt "3000" ]; then
+        if [ $ATTEMPTS -gt "$MAX_POSSIBLE_ATTEMPTS" ]; then
             fail "wait_for_container_output_matching_file ultimate max exceeded: \"$(cat $EXPECTED_OUTPUT_FILE)\" ($*)"
         fi
         if [ $ATTEMPTS -gt "$MAX_ATTEMPTS" ]; then
             fail "wait_for_container_output_matching_file unable to find output: \"$(cat $EXPECTED_OUTPUT_FILE)\" ($*)"
         fi
         ATTEMPTS=$((ATTEMPTS+1))
-        sleep 0.2
+        sleep $POLL_INTERVAL
     done
 }
 
