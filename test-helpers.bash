@@ -153,6 +153,47 @@ function wait_for_container_output() {
     done
 }
 
+function wait_for_container_output_matching_file() {
+    local MAX_WAIT_SECONDS=$1
+    local CONTAINER_NAME=$2
+    local EXPECTED_OUTPUT_FILE=$3
+    local POLL_INTERVAL=${4:-1}
+
+    local MAX_POSSIBLE_WAIT_SECONDS=600  # never run for more than 10 minutes
+    local MAX_ATTEMPTS=$((MAX_WAIT_SECONDS / POLL_INTERVAL))
+    local MAX_POSSIBLE_ATTEMPTS=$((MAX_POSSIBLE_WAIT_SECONDS / POLL_INTERVAL))
+
+    shift
+    local ATTEMPTS=0
+
+    # This function may be run outside of BATS, so ensure `fail` has a definition
+    if [[ $(type -t fail) != function ]]; then
+        function fail() {
+            local message=$1
+            echo "FAIL: $message"
+            exit 1
+        }
+    fi
+
+    if ! "$CONTAINER_RUNTIME" logs "$CONTAINER_NAME" ; then
+        fail "unable to get logs for container: $CONTAINER_NAME"
+    fi
+
+    # Pipe both "docker logs" and expected_output through tr replacing newlines with non-printable byte. This
+    # allows grep to match a multline string against docker logs output
+    # Note for failing containers, logs go to stderr
+    until ("$CONTAINER_RUNTIME" logs "$CONTAINER_NAME" || :) 2>&1 | tr '\n' '\1' | grep -qF "$(tr '\n' '\1' < $EXPECTED_OUTPUT_FILE)" ; do
+        if [ $ATTEMPTS -gt "$MAX_POSSIBLE_ATTEMPTS" ]; then
+            fail "wait_for_container_output_matching_file ultimate max exceeded: \"$(cat $EXPECTED_OUTPUT_FILE)\" ($*)"
+        fi
+        if [ $ATTEMPTS -gt "$MAX_ATTEMPTS" ]; then
+            fail "wait_for_container_output_matching_file unable to find output: \"$(cat $EXPECTED_OUTPUT_FILE)\" ($*)"
+        fi
+        ATTEMPTS=$((ATTEMPTS+1))
+        sleep $POLL_INTERVAL
+    done
+}
+
 function check_remote_file_exists() {
     if [[ $(curl -o /dev/null --silent --head --write-out '%{http_code}' "$1") != "200" ]]; then
         fail "remote file does not exist: $1"
