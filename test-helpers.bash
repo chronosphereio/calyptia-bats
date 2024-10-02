@@ -209,3 +209,40 @@ function random_string() {
 	done
 	echo
 }
+
+# Function to check the reload count provided by Fluent Bit matches a value:
+# https://docs.fluentbit.io/manual/administration/hot-reload
+# Typically used to trigger a reload and then wait for it to happen.
+function wait_for_reload_count() {
+    local calyptia_host=${1:?}
+    local reload_count=${2:?}
+    local max_attempts=${3:-10}
+
+    wait_for_url "$max_attempts" "$calyptia_host/api/v2/reload"
+
+    local attempts=0
+    # This function may be run outside of BATS, so ensure `fail` has a definition
+    if [[ $(type -t fail) != function ]]; then
+        function fail() {
+            local message=$1
+            echo "FAIL: $message"
+            exit 1
+        }
+    fi
+
+    local current_reload_count
+    current_reload_count="$(curl -sSf -X GET "$calyptia_host/api/v2/reload" | jq -cr '.hot_reload_count')"
+
+    until [[ "$current_reload_count" == "$reload_count" ]]; do
+        # Prevent an infinite loop - at 2 seconds per go this is 10 minutes
+        if [ $attempts -gt "300" ]; then
+            fail "wait_for_reload_count ultimate max exceeded: $current_reload_count != $reload_count"
+        fi
+        if [ $attempts -gt "$max_attempts" ]; then
+            fail "wait_for_reload_count unable to match value: $current_reload_count != $reload_count"
+        fi
+        attempts=$((attempts+1))
+        sleep 5
+        current_reload_count="$(curl -X GET "$calyptia_host/api/v2/reload" | jq -cr '.hot_reload_count')"
+    done
+}
