@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euox pipefail
 
 # The root of the tests to run locally, i.e. the custom test files we want to execute.
 export TEST_ROOT=${TEST_ROOT:?}
