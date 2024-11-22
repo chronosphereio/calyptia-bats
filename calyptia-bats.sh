@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euox pipefail
 
 # The root of the tests to run locally, i.e. the custom test files we want to execute.
 export TEST_ROOT=${TEST_ROOT:?}
@@ -18,7 +18,7 @@ export CUSTOM_HELPERS_ROOT=${CUSTOM_HELPERS_ROOT:-$TEST_ROOT/helpers/}
 # Some common options
 export CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
 export BATS_FORMATTER=${BATS_FORMATTER:-tap}
-export BATS_ARGS=${BATS_ARGS:---timing --verbose-run}
+export BATS_ARGS=${BATS_ARGS:---timing --verbose-run --print-output-on-failure --trace}
 
 # BATS installation location
 export BATS_ROOT=${BATS_ROOT:-$CALYPTIA_BATS_DIR/bats}
