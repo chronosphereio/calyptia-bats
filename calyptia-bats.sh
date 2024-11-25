@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euox pipefail
+set -euo pipefail
 
 # The root of the tests to run locally, i.e. the custom test files we want to execute.
 export TEST_ROOT=${TEST_ROOT:?}
@@ -75,7 +75,7 @@ function install_bats() {
 # Helper function to run a set of tests based on our specific configuration
 # This function will call `exit`, so any cleanup must be done inside of it.
 function run_tests() {
-    local requested=$1
+    local requested=${1:-}
     local run=""
 
     if [[ "$requested" == "all" ]] || [ -z "$requested" ]; then
